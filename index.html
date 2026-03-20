@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>분리배출 마스터 - 실전 교육 게임</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;700&display=swap');
+        body { font-family: 'Noto Sans KR', sans-serif; background-color: #f8fafc; overflow-x: hidden; }
+        .bin-target { transition: all 0.2s; border: 2px solid transparent; }
+        .bin-target:hover { transform: translateY(-5px); border-color: #22c55e; background-color: #f0fdf4; }
+        .item-card { cursor: grab; touch-action: none; transition: transform 0.1s; }
+        .item-card:active { cursor: grabbing; transform: scale(1.1); }
+        .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6); align-items: center; justify-content: center; z-index: 100; backdrop-filter: blur(4px); }
+        .modal.show { display: flex; animation: fadeIn 0.3s ease; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        .weekly-badge { animation: pulse 2s infinite; }
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.7; } }
+    </style>
+</head>
+<body class="text-slate-800">
+
+    <!-- Header -->
+    <nav class="bg-white shadow-sm sticky top-0 z-40">
+        <div class="max-w-5xl mx-auto px-6 h-16 flex items-center justify-between">
+            <div class="flex items-center gap-2">
+                <div class="bg-green-500 text-white p-2 rounded-lg text-lg">
+                    <i class="fas fa-leaf"></i>
+                </div>
+                <h1 class="text-xl font-bold text-slate-800 tracking-tight">분리배출 마스터</h1>
+            </div>
+            <div class="flex gap-6">
+                <button onclick="showSection('game')" class="text-slate-600 hover:text-green-600 font-bold transition">챌린지</button>
+                <button onclick="showSection('guide')" class="text-slate-600 hover:text-green-600 font-bold transition">도감</button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="max-w-5xl mx-auto p-4 md:p-8">
+        
+        <!-- Game Section -->
+        <section id="game-section">
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                
+                <!-- Left: Status & Item -->
+                <div class="lg:col-span-1 space-y-6">
+                    <div class="bg-white rounded-3xl p-6 shadow-sm border border-slate-100">
+                        <div class="flex justify-between items-end">
+                            <div>
+                                <p class="text-xs text-slate-400 font-bold uppercase tracking-wider">Current Score</p>
+                                <h2 id="score" class="text-4xl font-black text-green-500">0</h2>
+                            </div>
+                            <div class="text-right">
+                                <p id="combo-text" class="text-xs text-orange-500 font-bold hidden">COMBO X1</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bg-white rounded-3xl p-8 shadow-xl border-t-4 border-green-500 flex flex-col items-center justify-center min-h-[320px] relative overflow-hidden">
+                        <div class="absolute top-4 right-4 bg-slate-100 px-3 py-1 rounded-full text-[10px] font-bold text-slate-500 uppercase">분리배출 대상</div>
+                        <div id="item-display" class="w-full flex flex-col items-center">
+                            <!-- Item Spawns Here -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right: Disposal Bins -->
+                <div class="lg:col-span-2">
+                    <div class="grid grid-cols-2 sm:grid-cols-3 gap-4 h-full">
+                        <div onclick="handleDisposal('paper')" class="bin-target bg-white rounded-3xl p-6 shadow-sm flex flex-col items-center justify-center gap-3 cursor-pointer">
+                            <div class="w-16 h-16 bg-yellow-50 rounded-2xl flex items-center justify-center text-3xl text-yellow-600"><i class="fas fa-copy"></i></div>
+                            <span class="font-bold">종이류</span>
+                        </div>
+                        <div onclick="handleDisposal('plastic')" class="bin-target bg-white rounded-3xl p-6 shadow-sm flex flex-col items-center justify-center gap-3 cursor-pointer">
+                            <div class="w-16 h-16 bg-blue-50 rounded-2xl flex items-center justify-center text-3xl text-blue-500"><i class="fas fa-bottle-water"></i></div>
+                            <span class="font-bold">플라스틱</span>
+                        </div>
+                        <div onclick="handleDisposal('can')" class="bin-target bg-white rounded-3xl p-6 shadow-sm flex flex-col items-center justify-center gap-3 cursor-pointer">
+                            <div class="w-16 h-16 bg-slate-50 rounded-2xl flex items-center justify-center text-3xl text-slate-500"><i class="fas fa-can-food"></i></div>
+                            <span class="font-bold">캔/고철</span>
+                        </div>
+                        <div onclick="handleDisposal('glass')" class="bin-target bg-white rounded-3xl p-6 shadow-sm flex flex-col items-center justify-center gap-3 cursor-pointer">
+                            <div class="w-16 h-16 bg-orange-50 rounded-2xl flex items-center justify-center text-3xl text-orange-700"><i class="fas fa-wine-glass"></i></div>
+                            <span class="font-bold">유리병</span>
+                        </div>
+                        <div onclick="handleDisposal('vinyl')" class="bin-target bg-white rounded-3xl p-6 shadow-sm flex flex-col items-center justify-center gap-3 cursor-pointer">
+                            <div class="w-16 h-16 bg-purple-50 rounded-2xl flex items-center justify-center text-3xl text-purple-500"><i class="fas fa-box"></i></div>
+                            <span class="font-bold">비닐류</span>
+                        </div>
+                        <div onclick="handleDisposal('trash')" class="bin-target bg-white rounded-3xl p-6 shadow-sm flex flex-col items-center justify-center gap-3 cursor-pointer">
+                            <div class="w-16 h-16 bg-red-50 rounded-2xl flex items-center justify-center text-3xl text-red-500"><i class="fas fa-trash-can"></i></div>
+                            <span class="font-bold uppercase text-xs">일반쓰레기</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Guide Section -->
+        <section id="guide-section" class="hidden">
+            <div class="flex flex-col md:flex-row justify-between items-center mb-8 gap-4">
+                <h2 class="text-3xl font-black">분리배출 도감</h2>
+                <div class="flex gap-2">
+                    <span class="bg-blue-100 text-blue-600 px-4 py-2 rounded-full text-sm font-bold weekly-badge">목요일: 비닐/투명페트 Day</span>
+                </div>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" id="guide-container">
+                <!-- Guide Cards Injected Here -->
+            </div>
+        </section>
+    </main>
+
+    <!-- Feedback Modal -->
+    <div id="feedback-modal" class="modal">
+        <div class="bg-white rounded-3xl p-8 max-w-sm w-full mx-4 shadow-2xl text-center transform transition-all">
+            <div id="modal-icon" class="text-7xl mb-6"></div>
+            <h3 id="modal-title" class="text-2xl font-black mb-3"></h3>
+            <div id="modal-desc" class="text-slate-600 text-sm leading-relaxed mb-8 bg-slate-50 p-4 rounded-2xl text-left"></div>
+            <button onclick="closeModal()" class="w-full bg-green-500 text-white py-4 rounded-2xl font-black hover:bg-green-600 shadow-lg shadow-green-100 transition-all active:scale-95">다음 아이템 확인</button>
+        </div>
+    </div>
+
+    <script>
+        // Expanded and Detailed Waste Items Data
+        const wasteDatabase = [
+            // Paper
+            { name: "깨끗한 종이 박스", type: "paper", icon: "📦", tip: "테이프와 송장은 반드시 제거하고 접어서 배출하세요.", detail: "재활용되는 품목: 신문지, 책자, 종이박스" },
+            { name: "영수증/감열지", type: "trash", icon: "🧾", tip: "영수증은 복합 재질이라 재활용이 안 됩니다. 일반 쓰레기로 버리세요.", detail: "재활용 안 되는 품목: 전단지, 코팅된 종이, 사용한 화장지" },
+            { name: "우유팩", type: "paper", icon: "🥛", tip: "내용물을 비우고 물로 헹군 뒤 펼쳐서 말려 배출하세요.", detail: "일반 종이류와 구분하여 배출하면 더 좋습니다." },
+            
+            // Plastic
+            { name: "라벨 제거된 투명 페트병", type: "plastic", icon: "🥤", tip: "가장 고품질의 재활용 자원입니다. 꼭 라벨을 떼고 압착하세요.", detail: "목요일(또는 지정 요일)에 별도로 분리배출합니다." },
+            { name: "음식물이 묻은 배달 용기", type: "trash", icon: "🍱", tip: "씻어도 이물질이 제거되지 않는다면 일반 쓰레기로 버려야 합니다.", detail: "기름기가 남은 플라스틱은 재활용 가치를 떨어뜨립니다." },
+            { name: "칫솔", type: "trash", icon: "🪥", tip: "칫솔모와 손잡이가 다른 재질이라 재활용이 어렵습니다.", detail: "소형 가전이나 고무 등 복합 재질은 일반쓰레기입니다." },
+            { name: "샴푸통(펌프 포함)", type: "plastic", icon: "🧴", tip: "펌프 안의 스프링은 철제이므로 펌프는 따로 버리고 본체만 배출하세요.", detail: "뚜껑과 본체 재질이 다를 경우 분리해야 합니다." },
+
+            // Can/Metal
+            { name: "음료수 캔", type: "can", icon: "🥫", tip: "내용물을 비우고 발로 밟아 압착하여 배출하세요.", detail: "알루미늄과 철은 아주 소중한 자원입니다." },
+            { name: "부탄가스통", type: "can", icon: "🔥", tip: "노즐을 눌러 가스를 완전히 비우고 구멍을 뚫어 배출하세요.", detail: "폭발 위험이 있으니 주의가 필요합니다." },
+            
+            // Glass
+            { name: "맥주병/소주병", type: "glass", icon: "🍾", tip: "빈용기 보증금 환불 대상입니다. 마트나 편의점에 반납하세요.", detail: "병뚜껑은 제거하고 배출합니다." },
+            { name: "깨진 유리", type: "trash", icon: "🍷", tip: "깨진 유리는 재활용이 안 됩니다. 신문지에 잘 싸서 버리거나 전용 마대에 버리세요.", detail: "도자기, 거울, 내열 유리 등은 재활용 불가 품목입니다." },
+
+            // Vinyl
+            { name: "깨끗한 라면 봉지", type: "vinyl", icon: "🍜", tip: "음식물이 묻지 않은 깨끗한 상태로 흩날리지 않게 모아서 배출하세요.", detail: "비닐류는 목요일에 따로 배출하는 지역이 많습니다." },
+            { name: "택배 에어캡(뽁뽁이)", type: "vinyl", icon: "🫧", tip: "바람을 빼고 투명 비닐로 분리배출 하세요.", detail: "색상이 없는 투명 비닐이 재활용 가치가 높습니다." },
+            { name: "음식물이 묻은 비닐", type: "trash", icon: "🥡", tip: "씻어도 지워지지 않는 양념 등이 묻은 비닐은 일반 쓰레기입니다.", detail: "비닐 식탁보, 고무장갑 등은 재활용이 안 됩니다." },
+
+            // Styrofoam
+            { name: "흰색 스티로폼 상자", type: "plastic", icon: "🧊", tip: "테이프와 아이스팩을 완전히 제거한 후 배출하세요.", detail: "색깔이 있거나 코팅된 스티로폼은 일반 쓰레기입니다." }
+        ];
+
+        const guideCategories = [
+            { title: "종이류", icon: "fa-copy", color: "text-yellow-600", bg: "bg-yellow-50", text: "신문, 책, 상자", tip: "코팅된 종이, 영수증, 사진 등은 일반 쓰레기입니다." },
+            { title: "플라스틱", icon: "fa-bottle-water", color: "text-blue-500", bg: "bg-blue-50", text: "페트병, 용기류", tip: "투명 페트병은 별도 분리! 음식물 묻은 용기는 안돼요." },
+            { title: "캔/고철", icon: "fa-can-food", color: "text-slate-500", bg: "bg-slate-50", text: "음료캔, 가스통", tip: "가스통은 구멍 뚫기! 이물질 없는 상태로 배출하세요." },
+            { title: "유리병", icon: "fa-wine-glass", color: "text-orange-700", bg: "bg-orange-50", text: "음료병, 술병", tip: "보증금 환불 확인! 도자기나 깨진 유리는 일반 쓰레기입니다." },
+            { title: "비닐류", icon: "fa-box", color: "text-purple-500", bg: "bg-purple-50", text: "과자봉지, 투명비닐", tip: "딱딱한 비닐이나 오염된 비닐은 일반 쓰레기로 버리세요." },
+            { title: "일반쓰레기", icon: "fa-trash-can", color: "text-red-500", bg: "bg-red-50", text: "기타 재활용 불가", tip: "씻어도 안 닦이는 것, 기저귀, 복합재질(칫솔 등)" }
+        ];
+
+        let score = 0;
+        let combo = 0;
+        let currentItem = null;
+
+        function showSection(section) {
+            document.getElementById('game-section').classList.toggle('hidden', section !== 'game');
+            document.getElementById('guide-section').classList.toggle('hidden', section !== 'guide');
+            if(section === 'guide') renderGuide();
+        }
+
+        function spawnItem() {
+            const display = document.getElementById('item-display');
+            currentItem = wasteDatabase[Math.floor(Math.random() * wasteDatabase.length)];
+            
+            display.innerHTML = `
+                <div class="text-[100px] mb-4 animate-bounce-slow drop-shadow-lg">${currentItem.icon}</div>
+                <h3 class="text-2xl font-black text-center">${currentItem.name}</h3>
+                <p class="text-slate-400 text-xs mt-4 font-bold">아래의 알맞은 수거함 버튼을 누르세요</p>
+            `;
+        }
+
+        function handleDisposal(type) {
+            if (!currentItem) return;
+
+            const isCorrect = currentItem.type === type;
+            const modal = document.getElementById('feedback-modal');
+            const title = document.getElementById('modal-title');
+            const desc = document.getElementById('modal-desc');
+            const icon = document.getElementById('modal-icon');
+
+            if (isCorrect) {
+                score += 10 + (combo * 2);
+                combo++;
+                icon.innerHTML = "✨";
+                title.innerText = "정확합니다!";
+                title.className = "text-2xl font-black mb-3 text-green-600";
+                document.getElementById('combo-text').classList.remove('hidden');
+                document.getElementById('combo-text').innerText = `COMBO X${combo}`;
+            } else {
+                combo = 0;
+                icon.innerHTML = "💡";
+                title.innerText = "주의가 필요해요!";
+                title.className = "text-2xl font-black mb-3 text-orange-500";
+                document.getElementById('combo-text').classList.add('hidden');
+            }
+
+            document.getElementById('score').innerText = score;
+            desc.innerHTML = `
+                <div class="mb-2"><strong class="text-slate-800">분류:</strong> ${getKoreanName(currentItem.type)}</div>
+                <div class="mb-2"><strong class="text-green-600">배출 요령:</strong> ${currentItem.tip}</div>
+                <div class="text-[11px] text-slate-400 border-t pt-2 mt-2 font-medium">${currentItem.detail}</div>
+            `;
+            
+            modal.classList.add('show');
+        }
+
+        function getKoreanName(type) {
+            const map = { paper: "종이류", plastic: "플라스틱류", can: "캔/고철류", glass: "유리병류", vinyl: "비닐류", trash: "일반쓰레기" };
+            return map[type];
+        }
+
+        function closeModal() {
+            document.getElementById('feedback-modal').classList.remove('show');
+            spawnItem();
+        }
+
+        function renderGuide() {
+            const container = document.getElementById('guide-container');
+            container.innerHTML = guideCategories.map(cat => `
+                <div class="bg-white rounded-3xl p-6 shadow-sm border border-slate-100 flex flex-col items-start hover:shadow-md transition">
+                    <div class="w-12 h-12 ${cat.bg} ${cat.color} rounded-2xl flex items-center justify-center text-xl mb-4">
+                        <i class="fas ${cat.icon}"></i>
+                    </div>
+                    <h4 class="text-lg font-black mb-1">${cat.title}</h4>
+                    <p class="text-xs font-bold text-slate-400 mb-4">${cat.text}</p>
+                    <div class="bg-slate-50 rounded-2xl p-4 w-full">
+                        <p class="text-[13px] leading-relaxed text-slate-600"><span class="text-green-500 font-bold">TIP</span> ${cat.tip}</p>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        window.onload = spawnItem;
+    </script>
+</body>
+</html>
